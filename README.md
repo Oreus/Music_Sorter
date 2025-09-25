@@ -17,13 +17,13 @@ This project is a simple and dynamic song list in which the user can add, remove
 
 ### Hace un análisis de complejidad correcto y completo para los algoritmos de ordenamiento usados en el programa.
 
-
+The code uses sort (introsort) on a vector of pointers, giving O(n log n) average and worst-case time; each custom comparison is constant-time aside from string comparisons, so practical cost is O(k · n log n) where k is the average string comparison length.
 
 ## SICT0302B: Toma decisiones
 
 ### Selecciona un algoritmo de ordenamiento adecuado al problema y lo usa correctamente.
 
-
+Sort is an appropriate choice because it is efficient, in-place, and avoids pathological worst cases by switching to heapsort and it is used correctly with custom comparator functions (compareByTitle, compareByArtist, compareByDuration, compareByGenre) in List sortSongs.
 
 ## SICT0303B: Implementa acciones científicas
 
