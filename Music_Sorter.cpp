@@ -1,3 +1,8 @@
+// Oscar Lopez Cardoso
+// A01713355
+// 09/26/2025
+
+
 #include "Song_N_List.h"
 
 int main() {
