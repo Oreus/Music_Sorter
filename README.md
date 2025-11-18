@@ -1,141 +1,310 @@
 # Music List and Sorter
-This C++ project implements an interactive music manager that stores Song objects in a doubly linked list, lets the user add/remove/list/sort/search/filter songs, and load songs from a CSV file.
+This C++ project is an interactive music manager. Songs are represented by a Song class and stored as pointers in a doubly-linked list (std::list<Song*>). The program supports adding, removing, listing, sorting, searching, filtering, and loading songs from a CSV file. The loader trims whitespace, strips common BOM/CR characters, and reports malformed lines. The UI auto-loads a default songs.csv on startup and provides an interactive console menu.
 
-How to build and run
-1. Files to place in the same folder:
+## Project features
+- **Song model:** title, artist, duration (seconds), genre.
 
-- Song_N_List.h
-- main.cpp
-- songs.csv
+- **Storage:** std::list<Song*> (doubly-linked list of pointers).
 
-2. Compile the code
+- **Menu operations:**
+  - Add
+  - Remove (by index)
+  - Sort (Title / Artist / Duration / Genre)
+  - List
+  - Load from CSV
+  - Search (Title / Artist exact)
+  - Filter (Genre case-insensitive or Duration range)
+  - Quit.
 
-3. Run the code
+- **CSV loader:** trims fields, removes UTF‑8 BOM and trailing \r, validates field count, converts duration, reports loaded/skipped counts.
 
-4. Interactive menu (main options):
+- **Sorting:** uses std::list::sort (merge-like stable algorithm).
 
-- Add Song — provide title, artist, duration (seconds), genre.
+- **Ownership:** List owns and deletes Song* objects in its destructor.
 
-- Remove Song — remove by index shown in List Songs.
+## Build and run
+Required files (same folder or adjust paths):
 
-- Sort Songs — choose comparator: Title / Artist / Duration / Genre.
+- **Song_N_List.h**
 
-- List Songs — show index and song details.
+- **main.cpp**
 
-- Load from CSV — enter filename or full path (e.g., songs.csv).
+- **songs.csv**
 
-- Search — search by Title or Artist (exact match).
+Compile (example single-file):
 
-- Filter — filter by Genre or by Duration range.
+```bash
+g++ -o music main.cpp -std=c++17
+```
+If the project is split across multiple .cpp files, include them in the compile command.
 
-- Quit — exit program.
+## Run:
 
-Notes:
+### Windows (PowerShell):
 
-CSV format required: title,artist,duration,genre (duration in seconds as a number).
+```bash
+.\music.exe
+```
+Linux / macOS:
 
-The built-in CSV splitter is simple (splits on commas) and does not handle quoted fields with embedded commas; use Excel to export correct CSV or avoid commas inside fields.
+```bash
+./music
+```
+The program attempts to auto-load songs.csv from the working directory on startup. You may also load another CSV via the menu.
 
->Example: Sort my songs by artist
->
->Step 1: Create song list, ie. :
-><p>("King For A Day", 3.56, "Rock", "Pierce The Veil") <b>
-><p>("Tiramisu", 2.18, "Rap", "Don Toliver") <b> 
-><p>("Blue in Green", 5.1, "Jazz", "Miles Davis") <b>
->
->Step 2: Sort by song duration
-><p>("Tiramisu", 2.18, "Rap", "Don Toliver") <b> 
-><p>("King For A Day", 3.56, "Rock", "Pierce The Veil") <b>
-><p>("Blue in Green", 5.1, "Jazz", "Miles Davis") <b>
+Input CSV format
+Required header and columns (simple CSV, no quoted fields with embedded commas):
 
-## SICT0301B: Evalúa los componentes
+```csv
+title,artist,duration,genre
+Bohemian Rhapsody,Queen,354,Rock
+Imagine,John Lennon,183,Pop
+Hallelujah,Jeff Buckley,360,Folk
+duration: numeric value in seconds (integer or floating point).
+```
+Loader expects exactly 4 fields per line; lines with wrong field counts are reported and skipped.
 
-### Hace un análisis de complejidad correcto y completo para los algoritmos de ordenamiento usados en el programa.
+## Interactive menu (main options)
+1. **Add Song** — enter Title, Artist, Duration (seconds), Genre
 
-song list (structure: vector<Song*>)
+2. **Remove Song** — remove by index shown in List Songs
 
-access by index: O(1) because songs[i] is direct vector access.
+3. **Sort Songs** — choose comparator: Title / Artist / Duration / Genre
 
-search by value (e.g., find by title): O(n) because you must scan and compare each element.
+4. **List Songs** — display index and song details
 
-insertion (addSong — push_back): amortized O(1).
+5. **Load from CSV** — provide filename or full path
 
-deletion (removeSong — find + erase): O(n) because find is O(n) and erase may shift elements O(n); overall O(n).
+6. **Search** — search by Title or Artist (exact match)
 
-list all (listSongs): O(n).
+7. **Filter** — filter by Genre (case-insensitive) or by Duration range
 
-### Hace un análisis de complejidad correcto y completo de todas las estructuras de datos y cada uno de sus usos en el programa.
+8. **Quit** — exit program
 
-Song list (std::list<Song*>)
+### Short usage examples
+Example songs.csv:
 
-access by value (searchByTitle / searchByArtist / filterByGenre / filterByDurationRange): O(n) because the list is scanned and each element compared until matches are found.
+```csv
+title,artist,duration,genre
+Bohemian Rhapsody,Queen,354,Rock
+Imagine,John Lennon,183,Pop
+Hallelujah,Jeff Buckley,360,Folk
+```
+1. Start program:
 
-access by index (songAtIndex / used by removeSongByIndex): O(n) because advancing to index i requires iterating i steps.
+```bash
+./music
+```
+Startup prints auto-load summary, e.g.:
 
-insertion (addSong / push_back): O(1) time; O(1) additional space per element.
+```Code
+Auto-loaded from 'songs.csv': Loaded: 3, Skipped: 0
+```
+2. List songs (menu: 4):
 
-deletion by pointer (removeSong): O(n) time to locate the pointer (linear scan) + O(1) erase; O(1) space.
+```Code
+Songs:
+0) Bohemian Rhapsody - Queen (354) (Rock)
+1) Imagine - John Lennon (183) (Pop)
+2) Hallelujah - Jeff Buckley (360) (Folk)
+```
+3. Add a song (menu: 1) — follow prompts:
 
-deletion by index (removeSongByIndex): O(n) time to advance to the index + O(1) erase; O(1) space.
+```Code
+Title: King For A Day
+Artist: Pierce The Veil
+Duration (seconds): 216
+Genre: Rock
+```
+4. Sort by duration (menu: 3 → 3), then list (4) to verify order.
 
-list all songs (listSongs): O(n) time to traverse the list; O(1) space.
+5. Filter by genre (menu: 7 → 1) — enter rock → matching Rock songs shown (case-insensitive).
 
-load from CSV (loadFromCSV): O(L) time where L = number of lines read; each line is validated and addSong is O(1) so total O(L); O(n) space to store n songs (n ≤ L).
+6. Search by artist (menu: 6 → 2) — enter Queen → prints matches.
 
-sorting (sortSongs using std::list::sort): O(n log n) time (std::list::sort uses a merge-like algorithm suitable for linked lists) and O(1) auxiliary memory for the operation on lists.
+7. Remove a song (menu: 2) — program prompts for index shown in list.
 
-printing matches (printMatchesByIndex): O(m · n) in the worst case if there are m indices and each printed index calls songAtIndex (O(n) per call); a more efficient approach (not implemented) is a single-pass traversal to print matches in O(n).
+8. Load a different CSV (menu: 5) — enter filename or full path.
 
-Memory complexity (implemented)
+Example condensed session:
 
-total memory: O(n) for n Song objects stored as pointers plus per-node overhead (prev/next pointers and heap allocation overhead).
+```Code
+$ ./music
+Auto-loaded from 'songs.csv': Loaded: 3, Skipped: 0
 
-auxiliary memory: O(1) for most operations; search/filter result vectors use O(k) space where k = number of matches.
+--- Menu ---
+1) Add Song
+2) Remove Song
+3) Sort Songs
+4) List Songs
+5) Load from CSV
+6) Search
+7) Filter
+8) Quit
+Choose an action: 4
+Songs:
+0) Bohemian Rhapsody - Queen (354) (Rock)
+1) Imagine - John Lennon (183) (Pop)
+2) Hallelujah - Jeff Buckley (360) (Folk)
+```
+## Complexity analyses (best / average / worst)
+Assumptions:
 
-Practical observations (implemented)
+- n = number of songs stored
 
-CSV parser is simple: splits on commas and does not handle quoted fields; this affects correctness on complex CSVs but not asymptotic costs.
+- Song objects are pointers (Song*) inside std::list nodes
 
-Ownership: List destructor deletes Song* (manual memory management); deallocation cost at destruction is O(n).
+- Traversals use node-to-node iteration (no random access)
 
-## SICT0302B: Toma decisiones
+Data structure: std::list<Song*>
 
-### Selecciona una estructura de datos adecuada al problema y la usa correctamente.
+- Access by index (songAtIndex)
 
-I use a doubly linked list (std::list<Song*>) to store songs because the UI needs fast insertions and safe removals while preserving insertion order. Each Song is an object containing title, artist, duration and genre. Elements are inserted and removed via the List methods addSong, removeSong and removeSongByIndex; these methods are implemented in Song_N_List.h and show how the list is manipulated and the Song objects are owned and freed by the List destructor.
+  - Best: O(1) (index 0)
 
-### Selecciona un algoritmo de ordenamiento adecuado al problema y lo usa correctamente.
+  - Average: O(n)
 
-For this project I used sort() which invokes std::sort — commonly implemented as introsort. I chose std::sort because it combines quicksort’s practical speed with a heapsort fallback that guarantees O(n log n) worst-case and uses insertion sort on small partitions to reduce constant factors, making it appropriate when element moves are cheap (pointer assignments in vector<Song*>) and string comparisons dominate the cost. The call is used in List::sortSongs in Song_N_List.h and the comparators are the free functions compareByTitle, compareByArtist, compareByDuration, and compareByGenre. If stability is required, switch to stable_sort (mergesort) accepting O(n) additional memory.
+  - Worst: O(n)
 
-## SICT0303B: Implementa acciones científicas
+- Insertion at end (addSong / push_back)
 
-### Implementa mecanismos para consultar información de las estructras correctos.
+  - Best/Average/Worst: O(1)
 
-The program provides these query mechanisms over the linked list:
+- Deletion given iterator/pointer (erase when iterator known)
 
-- searchByTitle(title) — returns indices of exact-title matches (vector<int>) so the UI can display matched songs.
+  - Best/Average/Worst: O(1)
 
-- searchByArtist(artist) — returns indices of exact-artist matches (vector<int>).
+  - If locate first: O(n) + O(1) erase
 
-- filterByGenre(genre) — returns a vector<Song*> of matching Song pointers.
+- Traversal / listing / filter / search
 
-- filterByDurationRange(min,max) — returns a vector<Song*> of songs whose duration lies between min and max.
+  - Best: O(1) (if target at head and early exit)
 
-These functions are implemented in Song_N_List.h and are callable from the UI menu options (Search and Filter).
+  - Average/Worst: O(n)
 
-### Implementa mecanismos de lectura de archivos para cargar datos a las estructuras de manera correcta.
+- loadFromCSV
 
-- The program implements loadFromCSV(filename) that:
+  - Time: O(L · m) ≈ O(L) where L = number of lines, m = average line length
 
-- reads the CSV line by line, skipping empty lines;
+  - Space: O(n)
 
-- splits each line into four fields (title, artist, duration, genre) using a simple comma split;
+- sortSongs using std::list::sort
 
-- validates the field count and attempts to convert the duration field to a number;
+  - Best/Average/Worst: O(n log n)
 
-- reports malformed lines with line numbers and counts loaded vs skipped;
+  - Auxiliary: O(1) node splices (merge-style)
 
-- appends valid Song objects to the list (addSong).
+  - Stable: yes
 
-This loader is robust for the expected simple CSV format and returns pair(loaded, skipped) so the UI can present results to the user.
+- printMatchesByIndex (current UI)
+
+  - Worst-case: O(m · n) if printing m indices by repeated songAtIndex
+
+  - Improvement: single-pass traversal prints matches in O(n)
+
+- Memory complexity:
+
+  - Storage: O(n) Song objects + per-node overhead (prev/next pointers, allocator)
+
+  - Auxiliary: O(1) typical; result vectors O(k) where k = number of matches
+
+Practical note: std::list has poor cache locality. If frequent random access or large n, prefer std::vector<Song*> (O(1) index) and std::sort for better locality and speed; trade-off: deletions from middle become O(n).
+
+## Design decisions and justification
+- Data structure chosen: std::list<Song*>
+
+  - Rationale: O(1) insertion/erase at known positions, bidirectional traversal, stable iterators. Suited to interactive add/remove and potential splicing features.
+
+- Sorting chosen: std::list::sort (merge-style, stable)
+
+  - Rationale: merge-like sort fits linked lists (O(n log n), stable, O(1) splicing).
+
+- Alternatives and trade-offs:
+
+  - If workload moves to heavy indexed access: use std::vector<Song*> + std::sort or std::stable_sort.
+
+  - For fast genre/artist queries: build auxiliary indices (unordered_map<string, vector<Song*>>) at load time for O(1) average lookup.
+
+## SICT0301: Evalúa los componentes
+Complete analyses and evidence of component evaluation.
+
+### Sorting algorithms (used)
+- Implementation: std::list::sort (merge-like for linked lists)
+
+  - Worst-case: O(n log n)
+
+  - Best-case: O(n log n)
+
+  - Average-case: O(n log n)
+
+  - Space: O(1) auxiliary (node splices), O(n) storage overall
+
+  - Stability: stable
+
+Comparison:
+
+- std::list::sort is superior for linked lists vs. std::sort (introsort) which requires random access and benefits vectors due to cache locality. O(n²) sorts (Bubble/Selection) are asymptotically worse.
+
+### Data-structure operations (per operation)
+- addSong: O(1)
+
+- removeSong (search+erase): O(n) to find + O(1) erase
+
+- removeSongByIndex: O(n) to advance + O(1) erase
+
+- songAtIndex: O(n)
+
+- listSongs: O(n)
+
+- search/filter: O(n)
+
+- loadFromCSV: O(L · m) ≈ O(L)
+
+- sortSongs: O(n log n)
+
+All operations state best/average/worst as in the Complexity section.
+
+## SICT0302: Toma decisiones
+Documented choices and complexity-based justification.
+
+### Data structure choice
+- std::list<Song*> chosen for O(1) insert/erase at known positions and bidirectional traversal. Complexity comparisons and trade-offs provided above.
+
+### Sorting choice
+- std::list::sort chosen because it matches linked-list structure: stable, O(n log n), and uses O(1) splices. If container changes to vector, prefer std::sort for speed and locality.
+
+### Recommendations
+- Build auxiliary indices (genreIndex, artistIndex) at load time for O(1) average lookups.
+
+- Consider smart pointers (unique_ptr) for safer memory management.
+
+## SICT0303: Implementa acciones científicas
+Detailed mapping of implemented mechanisms and evidence-ready behavior.
+
+### File I/O and CSV loader (loadFromCSV)
+- Behavior: safe open, read line-by-line, skip empty lines, split on commas into 4 fields, trim fields, remove BOM and \r, validate field count, stod conversion for duration, create Song via addSong, return (loaded, skipped).
+
+- Complexity: O(L · m) per file; O(n) to store n songs.
+
+- Edge cases handled: BOM, CRLF, extra/missing fields, invalid duration; logs include line numbers.
+
+### Query mechanisms
+- searchByTitle(title) → vector<int> indices (exact match). Complexity: O(n).
+
+- searchByArtist(artist) → vector<int> indices (exact match). Complexity: O(n).
+
+- filterByGenre(genre) → vector<Song*> (case-insensitive when normalized). Complexity: O(n).
+
+- filterByDurationRange(min,max) → vector<Song*>. Complexity: O(n).
+
+### Conversion / utilities
+- songAtIndex(int) → Song* (or nullptr) — O(n).
+
+- listSongs() — prints list — O(n).
+
+### UI instrumentation
+- Auto-load summary printed at startup for evidence (Loaded: X, Skipped: Y).
+
+- Per-line error reporting in loader for traceability.
+
+- Interactive menu demonstrates user-driven use for video evidence.
