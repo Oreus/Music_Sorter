@@ -75,17 +75,37 @@ bool compareByGenre(const Song* a, const Song* b) {
 
 class List {
     private:
-        std::list<Song*> songs;   
-        // Split a CSV line into fields
-        static inline vector<string> splitCSVLineSimple(const string& line) {
-            vector<string> fields;
-            string field;
-            istringstream ss(line);
-            while (getline(ss, field, ',')) {
-                fields.push_back(field); 
-            }
-            return fields;
+    std::list<Song*> songs;   
+    // helper: trim from both ends (spaces and tabs)
+    static inline string trim(const string& s) {
+        size_t start = 0;
+        while (start < s.size() && (s[start] == ' ' || s[start] == '\t')) ++start;
+        size_t end = s.size();
+        while (end > start && (s[end - 1] == ' ' || s[end - 1] == '\t' || s[end - 1] == '\r' || s[end - 1] == '\n')) --end;
+        return s.substr(start, end - start);
+    }
+
+    // Split a CSV line into fields and sanitize each field
+    static inline vector<string> splitCSVLineSimple(const string& line) {
+        vector<string> fields;
+        string field;
+        istringstream ss(line);
+        while (getline(ss, field, ',')) {
+            string f = trim(field);
+
+        if (!fields.size() && f.size() >= 3 && 
+            static_cast<unsigned char>(f[0]) == 0xEF &&
+            static_cast<unsigned char>(f[1]) == 0xBB &&
+            static_cast<unsigned char>(f[2]) == 0xBF) {
+            f.erase(0, 3);
         }
+
+        if (!f.empty() && f.back() == '\r') f.pop_back();
+            fields.push_back(f);
+        }
+        return fields;
+    }
+
 
     public:
     List() : songs() {}
@@ -244,6 +264,7 @@ class List {
 class UI {
     private:
     List* list;
+    string autoLoadFile;
             // Prompt the user for an integer until valid input or quit command is entered
             int promptForInt(const string& prompt) {
             while (true) {
@@ -310,10 +331,14 @@ class UI {
         }
 
     public:
-    UI() : list(nullptr) {}
+    UI() : list(nullptr), autoLoadFile("") {}
 
     // Constructor that accepts a pre-loaded list 
-    UI(List* existingList) : list(existingList) {}
+    UI(List* existingList) : list(existingList), autoLoadFile("") {}
+    // Constructor that accepts a pre-loaded list and an auto-load filename
+    UI(List* existingList, const string& autoFile) : list(existingList), autoLoadFile(autoFile) {}
+     // Constructor that accepts only an auto-load filename
+    UI(const string& autoFile) : list(nullptr), autoLoadFile(autoFile) {}
 
     void Inicializer() {
         // create list if not present
@@ -321,12 +346,18 @@ class UI {
             list = new List();
             cout << "New list created!" << endl;
         }
+        // Auto-load the hardcoded file once
+        if (!autoLoadFile.empty()) {
+            auto result = list->loadFromCSV(autoLoadFile);
+            cout << "Auto-loaded from '" << autoLoadFile << "': Loaded: " << result.first << ", Skipped: " << result.second << endl;
+            autoLoadFile.clear();
+        }
     }
 
     void ListLoop() {
         Inicializer();
         cout << "\n--- Menu ---\n";
-        cout << "1) Add Song\n2) Remove Song\n3) Sort Songs\n4) List Songs\n5) Load from CSV\n6) Search\n7) Filter\n8) Quit\n";        int action = promptForInt("Choose an action: ");
+        cout << "1) Add Song\n2) Remove Song\n3) Sort Songs\n4) List Songs\n5) Load from CSV\n6) Search\n7) Filter\n8) Quit\n"; int action = promptForInt("Choose an action: ");
         switch (action) {
             case 1: {
                 // gather song fields from user and add to list
@@ -365,7 +396,7 @@ class UI {
                 list->listSongs();
                 break;
             case 5: {
-                // load CSV
+                // load CSV (manually)
                 string filename = promptForString("Enter CSV filename: ");
                 auto result = list->loadFromCSV(filename);
                 cout << "Loaded: " << result.first << ", Skipped: " << result.second << endl;
