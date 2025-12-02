@@ -231,22 +231,32 @@ Practical note: std::list has poor cache locality. If frequent random access or 
 ## SICT0301: Evalúa los componentes
 Complete analyses and evidence of component evaluation.
 
-### Sorting algorithms (used)
-- Implementation: std::list::sort (merge-like for linked lists)
-
+### Sorting algorithms (used and alternatives)
+- **Implementation: std::list::sort (merge-style adapted to linked lists)**
   - Worst-case: O(n log n)
-
   - Best-case: O(n log n)
-
   - Average-case: O(n log n)
-
   - Space: O(1) auxiliary (node splices), O(n) storage overall
-
   - Stability: stable
+- **Comparison: Best choice for std::list because it performs O(1) node splices and avoids extra memory; compares favorably to random-access algorithms when the container is a linked list.**
+ 
+- **Implementation: std::sort (introsort: quicksort + heapsort fallback + insertion sort for small partitions)**
+  - Worst-case: O(n log n) (guaranteed by the introsort fallback)
+  - Best-case: O(n log n) (practical best often close to O(n log n))
+  - Average-case: O(n log n)
+  - Space: O(log n) auxiliary (recursion stack)
+  - Stability: not stable
+- **Comparison: Ideal for std::vector or arrays due to random-access requirements and superior cache locality; typically faster in practice than list-based sorts for large datasets.**
 
-Comparison:
+- **Implementation: std::stable_sort (merge-based algorithm, uses extra buffer)**
+  - Worst-case: O(n log n)
+  - Best-case: O(n log n)
+  - Average-case: O(n log n)
+  - Space: O(n) auxiliary (merge buffer), o(n) storage overall
+  - Stability: stable
+- **Comparison: Use when stability is required on random-access containers; guarantees worst-case O(n log n) at the cost of additional memory compared with std::sort.**
 
-- std::list::sort is superior for linked lists vs. std::sort (introsort) which requires random access and benefits vectors due to cache locality. O(n²) sorts (Bubble/Selection) are asymptotically worse.
+Overall: The project uses std::list::sort by default (merge-like), whose worst/average/best complexities are all O(n log n). For random-access containers, std::sort (introsort) and std::stable_sort are the relevant alternatives; both guarantee O(n log n) worst-case, with trade-offs in stability and auxiliary space.
 
 ### Data-structure operations (per operation)
 - addSong: O(1)
@@ -266,6 +276,35 @@ Comparison:
 - sortSongs: O(n log n)
 
 All operations state best/average/worst as in the Complexity section.
+
+### Overall program
+- **Notation**
+  - n = number of songs stored
+  - L = number of lines in the CSV
+  - m = average line length
+  - k = number of additional full-list interactive operations (search/filter/list) performed after load/sort
+
+- **Total worst-case time complexity for the entire program**
+  - The program’s dominant phases are loading, sorting, and interactive operations. In the worst case (load n songs, sort once, then perform k full-list operations), the total time is:
+    - O(L) + O(n log n) + O(k * n) = O(n log n + k * n)
+  - If k is constant, this simplifies to O(n log n). if k = O(log n) or larger, than O(k * n) term can denominate.
+
+- **Total average-case time complexity**
+  - Typical runs behave like the worst-case asymptotically for the implemented algorithms: loading is linear and sorting is O(n log n). Thus the average-case total is also O(n log n + k * n) with the same dominance rules as above.
+
+- **Space complexity for the entire program**
+  - Primary storage: O(n) time, O(n) space) for song objects plus std::list node overhead (prev/next pointers).
+  - Auxiliary during executions: O(1) for std::list::sort. If the implementation switched to std::stable_sort on a vector, auxiliary would be O(n).
+
+- **Practical scenarios**
+  - Load only: O(n) time, O(n) space).
+  - Load then sort once: O(n log n) time, O(n) space.
+  - Load, sort, and perform many interactive operations: O(n log n) + O(k * n) time; each additional full-list operation costs O(n).
+
+**Summary:**
+- Dominant cost: sorting at O(n log n) for typical sessions.
+- I/O cost: linear in file size, O(L).
+- Interactive cost: each search/filter/list is linear O(n); many such operations accumulate as O(k * n).
 
 ## SICT0302: Toma decisiones
 Documented choices and complexity-based justification.
